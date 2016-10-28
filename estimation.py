@@ -1,5 +1,6 @@
 import lccm
 import numpy as np
+import pandas as pd
 import warnings
 
 # Load the data file
@@ -10,6 +11,10 @@ inputFileName = 'TrainingData.txt'
 print '\nReading %s' %inputFileName 
 data = np.loadtxt(open(inputFilePath + inputFileName, 'rb'), delimiter='\t')
 
+df = pd.DataFrame(data, columns=['indID', 'altID', 'obsID', 'choice', 'zipInd',
+        'hhIncome', 'gender', 'adopters', 'stationDummy', 'googleDummy', 'accessibility'])
+
+print df.describe()
 
 # Class-membership model: 
 # The first step is to specify the number of latent classes and to identify the column 
@@ -107,8 +112,18 @@ namesExpVarsClassSpec.append(['ASC (CarShare)'])
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    lccm.lccm_fit(nClasses, 
-            indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses,
-            obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights)
+    lccm.lccm_fit(data = df,
+                  nClasses = nClasses, 
+                  ind_id_col = 'indID', 
+                  obs_id_col = 'obsID',
+                  alt_id_col = 'altID',
+                  expVarsClassMem = expVarsClassMem, 
+                  namesExpVarsClassMem = namesExpVarsClassMem, 
+                  availIndClasses = availIndClasses,
+                  choice = choice, 
+                  availAlts = availAlts, 
+                  expVarsClassSpec = expVarsClassSpec, 
+                  namesExpVarsClassSpec = namesExpVarsClassSpec, 
+                  indWeights = indWeights)
 
 

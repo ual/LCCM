@@ -817,9 +817,13 @@ def emAlgo(outputFilePath, outputFileName, outputFile, nClasses,
                 
 
 
-def lccm_fit(nClasses, 
-             indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses,
-             obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights,
+def lccm_fit(data, 
+             nClasses, 
+             ind_id_col, 
+             obs_id_col,
+             alt_id_col,
+             expVarsClassMem, namesExpVarsClassMem, availIndClasses,
+             choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights,
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
 
@@ -837,6 +841,10 @@ def lccm_fit(nClasses,
     # - expVarsClassSpec, namesExpVarsClassSpec, indWeights
     
     outputFile = open(outputFilePath + outputFileName + 'Log.txt', 'w')
+    
+    indID = data[ind_id_col].values
+    obsID = data[obs_id_col].values
+    altID = data[alt_id_col].values
     
     
     emAlgo(outputFilePath = outputFilePath, 
