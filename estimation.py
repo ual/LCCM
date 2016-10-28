@@ -2,19 +2,12 @@ import lccm
 import numpy as np
 import warnings
 
-# Output file 
-
-outputFilePath = ('output/')
-outputFileName = 'ModelResults' 
-outputFile = open(outputFilePath + outputFileName + 'Log.txt', 'w')
-
-# Input parameters from the data file
+# Load the data file
 
 inputFilePath = 'data/'
 inputFileName = 'TrainingData.txt'
 
 print '\nReading %s' %inputFileName 
-outputFile.write('\nReading %s\n' %inputFileName )
 data = np.loadtxt(open(inputFilePath + inputFileName, 'rb'), delimiter='\t')
 
 
@@ -114,9 +107,8 @@ namesExpVarsClassSpec.append(['ASC (CarShare)'])
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    lccm.LCCM(outputFilePath, outputFileName, outputFile, nClasses, 
+    lccm.lccm_fit(nClasses, 
             indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses,
             obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights)
-    outputFile.close()
 
 

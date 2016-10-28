@@ -687,7 +687,7 @@ def emAlgo(outputFilePath, outputFileName, outputFile, nClasses,
     Parameters
     ----------
     outputFilePath : String.
-        File path to where all the output files should be stores.
+        File path to where all the output files should be stored.
     outputFileName : String.
         Name without extension that should be given to all output files.    
     outputFile : File.
@@ -817,15 +817,17 @@ def emAlgo(outputFilePath, outputFileName, outputFile, nClasses,
                 
 
 
-def LCCM(outputFilePath, outputFileName, outputFile, nClasses, 
-            indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses,
-            obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights):
+def lccm_fit(nClasses, 
+             indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses,
+             obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights,
+             outputFilePath = 'output/', 
+             outputFileName = 'ModelResults'):
 
     # These parameters can be optional:
     # - availIndClasses, availAlts
     # - outputFilePath, outputFileName, outputFile
     
-    # These params are special for LLCM, not in other models:
+    # These params are special for LCCM, not in other models:
     # - nClasses, expVarsClassMem, namesExpVarsClassMem
     
     # These should be similar or same to Tim's:
@@ -834,11 +836,26 @@ def LCCM(outputFilePath, outputFileName, outputFile, nClasses,
     # These need translation between Tim spec and Feras spec:
     # - expVarsClassSpec, namesExpVarsClassSpec, indWeights
     
+    outputFile = open(outputFilePath + outputFileName + 'Log.txt', 'w')
     
-    emAlgo(outputFilePath, outputFileName, outputFile, nClasses, 
-            indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses,
-            obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights)
     
+    emAlgo(outputFilePath = outputFilePath, 
+           outputFileName = outputFileName, 
+           outputFile = outputFile, 
+           nClasses = nClasses, 
+           indID = indID, 
+           expVarsClassMem = expVarsClassMem, 
+           namesExpVarsClassMem = namesExpVarsClassMem, 
+           availIndClasses = availIndClasses,
+           obsID = obsID, 
+           altID = altID, 
+           choice = choice, 
+           availAlts = availAlts, 
+           expVarsClassSpec = expVarsClassSpec, 
+           namesExpVarsClassSpec = namesExpVarsClassSpec, 
+           indWeights = indWeights)
+    
+    outputFile.close()
     return
     
     
