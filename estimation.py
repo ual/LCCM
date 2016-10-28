@@ -1,7 +1,9 @@
 import lccm
 import numpy as np
 import pandas as pd
+import pylogit
 import warnings
+from collections import OrderedDict
 
 # Load the data file
 
@@ -12,7 +14,10 @@ print '\nReading %s' %inputFileName
 data = np.loadtxt(open(inputFilePath + inputFileName, 'rb'), delimiter='\t')
 
 df = pd.DataFrame(data, columns=['indID', 'altID', 'obsID', 'choice', 'zipInd',
-        'hhIncome', 'gender', 'adopters', 'stationDummy', 'googleDummy', 'accessibility'])
+        'hhIncome', 'male', 'adopters', 'stationDummy', 'googleDummy', 'accessibility'])
+
+# Clean up and scale variables as needed
+df['hhIncome'] = df.hhIncome / 1000
 
 print df.describe()
 
@@ -34,6 +39,9 @@ indWeights = np.hstack((indWeightsA,indWeightsNA))
 # expVarsClassMem, of size (nExpVars x nRows). The (i, j)th element of the matrix denotes 
 # the ith explanatory variable entering the utility for the decision-maker corresponding 
 # to the jth row in the data file.
+
+class_membership_spec = ['hhIncome', 'male']
+
 
 
 hhIncome = data[:, 5]
@@ -78,6 +86,9 @@ availAlts = [np.array([0, 1]),
 # variable entering the utility for the alternative corresponding to the jth row 
 # in the data file.
 
+
+
+
 expVarsClassSpec, namesExpVarsClassSpec = [], []
 
 altcarshare = (altID == 1).astype(int)
@@ -106,7 +117,49 @@ namesExpVarsClassSpec.append(['ASC (CarShare)', 'Accessibility', 'Cumulative Ado
         
 expVarsClassSpec.append(np.vstack((altcarshare)).transpose())   
 namesExpVarsClassSpec.append(['ASC (CarShare)'])
-        
+
+
+# DICTIONARY VERSION
+
+df['altcarshare'] = (df.altID == 1).astype(int)
+df['v_accessibility'] = df.altID * df.accessibility
+df['v_adopters'] = df.altID * df.adopters
+df['v_google_dummy'] = df.altID * df.googleDummy
+
+spec1 = OrderedDict([
+        ('altcarshare', [1]),
+        ('v_accessibility', [1]),
+        ('v_google_dummy', [1])
+    ])
+
+spec2 = OrderedDict([
+        ('altcarshare', [1]),
+        ('v_accessibility', [1]),
+        ('v_adopters', [1]),
+        ('v_google_dummy', [1])
+    ])
+
+spec3 = OrderedDict([
+        ('altcarshare', [1])
+    ])
+
+specs = [spec1, spec2, spec3]
+
+# How to get Timothy's code to give us a design matrix?
+# 1. run Timothy's function
+# 2. add an intercept
+# 3. transpose matrix
+
+# matrix = pylogit.choice_tools.create_design_matrix(df, spec1, 'altID')
+# 
+# print type(matrix[0])
+# print matrix[0].shape
+# print np.transpose(matrix[0])[:,2000:2004]
+# 
+
+
+
+
 
 # Parameter Estimation
 
@@ -114,16 +167,15 @@ with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     
     lccm.lccm_fit(data = df,
-                  nClasses = nClasses, 
                   ind_id_col = 'indID', 
                   obs_id_col = 'obsID',
                   alt_id_col = 'altID',
                   choice_col = 'choice', 
-                  expVarsClassMem = expVarsClassMem, 
+                  nClasses = nClasses, 
+                  class_membership_spec = class_membership_spec,
                   namesExpVarsClassMem = namesExpVarsClassMem, 
-                  availIndClasses = availIndClasses,
                   availAlts = availAlts, 
-                  expVarsClassSpec = expVarsClassSpec, 
+                  class_specific_specs = specs,
                   namesExpVarsClassSpec = namesExpVarsClassSpec, 
                   indWeights = indWeights)
 

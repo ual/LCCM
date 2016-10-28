@@ -13,6 +13,7 @@ Jordan, M. I. An Introduction to Probabilistic Graphical Models.
 
 
 import numpy as np 
+import pylogit
 from scipy.sparse import coo_matrix
 from scipy.optimize import minimize
 from datetime import datetime
@@ -680,7 +681,7 @@ def calProb(nClasses, nInds, paramClassMem, expVarsClassMem, indClassAv,
                                                                                                                                                                                                                                                                                                                                                                                      
 def emAlgo(outputFilePath, outputFileName, outputFile, nClasses, 
         indID, expVarsClassMem, namesExpVarsClassMem, availIndClasses, 
-        obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights):
+        obsID, altID, choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights, paramClassMem, paramClassSpec):
     """
     Function that implements the EM Algorithm to estimate the desired model specification. 
     
@@ -749,14 +750,6 @@ def emAlgo(outputFilePath, outputFileName, outputFile, nClasses,
             nClasses, expVarsClassMem[:, ], availIndClasses, 
             obsID, altID,
             choice, availAlts) 
-
-    paramClassMem = np.zeros(expVarsClassMem.shape[0])
-    paramClassSpec = []
-    
-    # TO DO - ALLOW USER TO SPECIFY STARTING VALUES
-    paramClassSpec.append(np.array([-1,0,0]))    
-    paramClassSpec.append(np.array([-2,0,0,0]))
-    paramClassSpec.append(np.array([-15]))
     
 #     for s in range(0, nClasses):
 #        paramClassSpec.append(-np.random.rand(expVarsClassSpec[s].shape[0])/10)
@@ -818,13 +811,17 @@ def emAlgo(outputFilePath, outputFileName, outputFile, nClasses,
 
 
 def lccm_fit(data, 
-             nClasses, 
              ind_id_col, 
              obs_id_col,
              alt_id_col,
              choice_col,
-             expVarsClassMem, namesExpVarsClassMem, availIndClasses,
-             availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights,
+             nClasses, 
+             class_membership_spec, 
+             namesExpVarsClassMem, 
+             availAlts, 
+             class_specific_specs,
+             namesExpVarsClassSpec, indWeights,
+             avail_classes = None,
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
 
@@ -843,10 +840,44 @@ def lccm_fit(data,
     
     outputFile = open(outputFilePath + outputFileName + 'Log.txt', 'w')
     
+    
+    # Specify columns representing individual, observation, and alternative id
     indID = data[ind_id_col].values
     obsID = data[obs_id_col].values
     altID = data[alt_id_col].values
+    
+    # Transpose the choice column
     choice = np.reshape(data[choice_col].values, (data.shape[0], 1))
+    
+    # CLASS MEMBERSHIP MODEL
+    
+    # Which latent classes are available to which decision-maker? 
+    # 2D array of size (nClasses x nRows) where 1=available, 0=not
+    if avail_classes is None:
+        availIndClasses = np.ones((nClasses, data.shape[0]), dtype=np.int)
+    
+    # TO DO - fix to deal with intercept properly
+    intercept = np.ones(data.shape[0])
+    vars = np.vstack((data[var].values for var in class_membership_spec))
+    expVarsClassMem = np.vstack((intercept, vars))
+    
+    # CLASS SPECIFIC MODELS
+    
+    s = class_specific_specs
+    m1 = pylogit.choice_tools.create_design_matrix(data, s[0], 'altID')[0]
+    m2 = pylogit.choice_tools.create_design_matrix(data, s[1], 'altID')[0]
+    m3 = pylogit.choice_tools.create_design_matrix(data, s[2], 'altID')[0]
+
+    expVarsClassSpec = [np.transpose(m1), np.transpose(m2), np.transpose(m3)]
+    
+    # starting values for the parameters of the class membership and class specific models
+    paramClassMem = np.zeros(expVarsClassMem.shape[0]*(nClasses-1))
+    paramClassSpec = []
+    
+    # SPECIFY STARTING VALUES
+    paramClassSpec.append(np.array([-1,0,0]))    
+    paramClassSpec.append(np.array([-2,0,0,0]))
+    paramClassSpec.append(np.array([-15]))
     
     
     emAlgo(outputFilePath = outputFilePath, 
@@ -863,7 +894,9 @@ def lccm_fit(data,
            availAlts = availAlts, 
            expVarsClassSpec = expVarsClassSpec, 
            namesExpVarsClassSpec = namesExpVarsClassSpec, 
-           indWeights = indWeights)
+           indWeights = indWeights,
+           paramClassMem = paramClassMem,
+           paramClassSpec = paramClassSpec)
     
     outputFile.close()
     return
