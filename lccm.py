@@ -822,8 +822,9 @@ def lccm_fit(data,
              ind_id_col, 
              obs_id_col,
              alt_id_col,
+             choice_col,
              expVarsClassMem, namesExpVarsClassMem, availIndClasses,
-             choice, availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights,
+             availAlts, expVarsClassSpec, namesExpVarsClassSpec, indWeights,
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
 
@@ -845,6 +846,7 @@ def lccm_fit(data,
     indID = data[ind_id_col].values
     obsID = data[obs_id_col].values
     altID = data[alt_id_col].values
+    choice = np.reshape(data[choice_col].values, (data.shape[0], 1))
     
     
     emAlgo(outputFilePath = outputFilePath, 

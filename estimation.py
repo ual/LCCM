@@ -112,15 +112,16 @@ namesExpVarsClassSpec.append(['ASC (CarShare)'])
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
+    
     lccm.lccm_fit(data = df,
                   nClasses = nClasses, 
                   ind_id_col = 'indID', 
                   obs_id_col = 'obsID',
                   alt_id_col = 'altID',
+                  choice_col = 'choice', 
                   expVarsClassMem = expVarsClassMem, 
                   namesExpVarsClassMem = namesExpVarsClassMem, 
                   availIndClasses = availIndClasses,
-                  choice = choice, 
                   availAlts = availAlts, 
                   expVarsClassSpec = expVarsClassSpec, 
                   namesExpVarsClassSpec = namesExpVarsClassSpec, 
