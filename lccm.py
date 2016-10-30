@@ -860,31 +860,38 @@ def lccm_fit(data,
     # Generate the choice column and transpose it
     choice = np.reshape(data[choice_col].values, (data.shape[0], 1))
     
-    # CLASS MEMBERSHIP MODEL
-    
     # NUMBER OF CLASSES: We could infer this from the number of choice specifications 
-    # provided, but it's probably better to make it explicit, because that gives us the 
-    # option of taking a single choice specification and using it for all the classes?
+    # provided, but it's probably better to make it explicit because that gives us the 
+    # option of taking a single choice specification and using it for all the classes (?)
+    
     nClasses = n_classes
     
     # AVAILABLE CLASSES: Which latent classes are available to which decision-maker? 
     # 2D array of size (nClasses x nRows) where 1=available, 0=not
+    
     if avail_classes is None:
         availIndClasses = np.ones((nClasses, data.shape[0]), dtype=np.int)
     
-    # CLASS MEMBERSHIP MODEL: Generate design matrix
-    # TO DO - fix to deal with intercept properly
-    intercept = np.ones(data.shape[0])
-    vars = np.vstack((data[var].values for var in class_membership_spec))
-    expVarsClassMem = np.vstack((intercept, vars))
+    # CLASS MEMBERSHIP MODEL: Generate design matrix, including intercept if needed. 
+    # We're not using the function from pylogit for two reasons: (1) we don't have a 
+    # choice column to provide, and (2) the convention is for all parameters to be 
+    # included for each class, so we won't have any of the special cases that the ordered
+    # dictionaries enable. (May want to revisit this in future.)
+    
+    if (class_membership_spec[0] == 'intercept'):
+    	data['intercept'] = np.ones(data.shape[0])
+
+    expVarsClassMem = np.vstack((data[var].values for var in class_membership_spec))
     
     # AVAILABLE ALTERNATIVES: Which choice alternatives are available to each latent
     # class of decision-makers? List of size nClasses, where each element is a list of
     # identifiers of the alternatives available to members of that class.
+    
     if avail_alts is None:
     	availAlts = [np.unique(altID) for s in class_specific_specs]    
     
     # CLASS-SPECIFIC MODELS: Use pylogit to generate design matrices
+    
     design_matrices = [pylogit.choice_tools.create_design_matrix(data, spec, 'altID')[0] 
     						for spec in class_specific_specs]
 
