@@ -6,13 +6,13 @@ import warnings
 from collections import OrderedDict
 
 # Load the data file
-
 inputFilePath = 'data/'
 inputFileName = 'TrainingData.txt'
 
 print '\nReading %s' %inputFileName 
 data = np.loadtxt(open(inputFilePath + inputFileName, 'rb'), delimiter='\t')
 
+# Convert to a pandas dataframe
 df = pd.DataFrame(data, columns=['indID', 'altID', 'obsID', 'choice', 'zipInd',
         'hhIncome', 'male', 'adopters', 'stationDummy', 'googleDummy', 'accessibility'])
 
@@ -21,8 +21,7 @@ df['hhIncome'] = df.hhIncome / 1000
 
 
 # Class-membership model: 
-# The first step is to specify the number of latent classes and to identify the column 
-# in the data file denoting the individual IDs. 
+# The first step is to specify the number of latent classes
 
 nClasses = 3
 
@@ -40,36 +39,9 @@ indWeights = np.hstack((indWeightsA,indWeightsNA))
 # to the jth row in the data file.
 
 class_membership_spec = ['hhIncome', 'male']
+class_membership_labels = ['Class-specific constant','Monthly Income (1000s $)', 'male' ]
 
 
-
-hhIncome = data[:, 5]
-hhIncome = hhIncome / 1000
-
-male = (data[:, 6] == 1).astype(int)
-
-expVarsClassMem = np.vstack((np.ones(data.shape[0]),hhIncome, male))
-
-namesExpVarsClassMem = ['Class-specific constant','Monthly Income (1000s $)', 'male' ]
-        
-
-# Constraints on available latent classes are imposed through the variable availClasses, 
-# a 2D array of size (nClasses x nRows), where the (i,j)th element equals 1 if the ith 
-# latent class is available to the decision-maker corresponding to the jth row in the 
-# dataset, and 0 otherwise.
-
-availIndClasses = np.vstack((np.logical_not(hhIncome < 0).astype(int), 
-                          np.logical_not(hhIncome < 0).astype(int),np.logical_not(hhIncome < 0).astype(int)))
-
-
-# Class-specific choice model
-# The first step is to identify key columns in the data file denoting the individual,
-# observation, alternatives and choices.
-
-indID = data[:, 0]    
-obsID = data[:, 2]
-altID = data[:, 1]
-choice = np.reshape(data[:, 3], (data.shape[0], 1))
 
 # Choice set constraints are imposed through the variable availAlts, a list of 
 # size nClasses, where the sth element is an array containing identifiers for the 
@@ -78,47 +50,9 @@ choice = np.reshape(data[:, 3], (data.shape[0], 1))
 availAlts = [np.array([0, 1]), 
                 np.array([0, 1]), np.array([0, 1])]    
 
-# Utility for each of the classes is specified by creating a list expVarsClassSpec, of size 
-# nClasses, where the sth element is a matrix of size (nExpVars x nRows) containing
-# the explanatory variables entering the class-specific utilities for the sth 
-# latent class. The (i, j)th element of the matrix denotes the ith explanatory 
-# variable entering the utility for the alternative corresponding to the jth row 
-# in the data file.
 
 
-
-
-expVarsClassSpec, namesExpVarsClassSpec = [], []
-
-altcarshare = (altID == 1).astype(int)
-altnocarshare = (altID == 0).astype(int)  
-
-zipInd = data[:,4]
-googleDummy = data[:,9]
-
-
-stationDummy = data[:,8]
-adopters = data[:,7]
-
-accessibility = data[:,10]    
-
-stationDummyNeeded = altID * stationDummy
-adoptersNeeded = altID * adopters
-googleDummyNeeded = altID * googleDummy 
-accessibilityNeeded = altID * accessibility
-
-expVarsClassSpec.append(np.vstack(( altcarshare, accessibilityNeeded,  googleDummyNeeded)))    
-namesExpVarsClassSpec.append(['ASC (CarShare)','Accessibility', 'Google Employee'])
-
-expVarsClassSpec.append(np.vstack((altcarshare,  accessibilityNeeded, adoptersNeeded, googleDummyNeeded)))  
-namesExpVarsClassSpec.append(['ASC (CarShare)', 'Accessibility', 'Cumulative Adopters (t-1)', 'Google Employee']) 
-
-        
-expVarsClassSpec.append(np.vstack((altcarshare)).transpose())   
-namesExpVarsClassSpec.append(['ASC (CarShare)'])
-
-
-# DICTIONARY VERSION
+# UTILITY SPECIFICATIONS FOR EACH LATENT CLASS
 
 # New vars: carshare choice indicator, and interaction of utility components with choice
 
@@ -127,24 +61,31 @@ df['v_accessibility'] = df.altID * df.accessibility
 df['v_adopters'] = df.altID * df.adopters
 df['v_google_dummy'] = df.altID * df.googleDummy
 
-# Set up class-specific specifications in a pylogit-style format
+
+# Set up class-specific specifications in a pylogit-style format, and corresponding labels
 
 class_specific_specs = [
-		OrderedDict([
-			('altcarshare', [1]), 
-			('v_accessibility', [1]), 
-			('v_google_dummy', [1]) ]),
-		OrderedDict([
-			('altcarshare', [1]),
-			('v_accessibility', [1]),
-        	('v_adopters', [1]),
-        	('v_google_dummy', [1]) ]),
-		OrderedDict([
-        	('altcarshare', [1])])
-        ]
+	OrderedDict([
+		('altcarshare', [1]), 
+		('v_accessibility', [1]), 
+		('v_google_dummy', [1]) ]),
+	OrderedDict([
+		('altcarshare', [1]),
+		('v_accessibility', [1]),
+		('v_adopters', [1]),
+		('v_google_dummy', [1]) ]),
+	OrderedDict([
+		('altcarshare', [1])])
+]
+
+class_specific_labels = [
+	['ASC (CarShare)','Accessibility', 'Google Employee'],
+	['ASC (CarShare)', 'Accessibility', 'Cumulative Adopters (t-1)', 'Google Employee'],
+	['ASC (CarShare)']
+]
 
 
-# Parameter Estimation
+# Invoke the parameter estimation
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -156,10 +97,10 @@ with warnings.catch_warnings():
                   choice_col = 'choice', 
                   nClasses = nClasses, 
                   class_membership_spec = class_membership_spec,
-                  namesExpVarsClassMem = namesExpVarsClassMem, 
+                  class_membership_labels = class_membership_labels,
                   availAlts = availAlts, 
                   class_specific_specs = class_specific_specs,
-                  namesExpVarsClassSpec = namesExpVarsClassSpec, 
+                  class_specific_labels = class_specific_labels, 
                   indWeights = indWeights)
 
 

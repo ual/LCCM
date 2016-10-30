@@ -817,10 +817,11 @@ def lccm_fit(data,
              choice_col,
              nClasses, 
              class_membership_spec, 
-             namesExpVarsClassMem, 
+             class_membership_labels, 
              availAlts, 
              class_specific_specs,
-             namesExpVarsClassSpec, indWeights,
+             class_specific_labels, 
+             indWeights,
              avail_classes = None,
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
@@ -851,13 +852,12 @@ def lccm_fit(data,
     
     outputFile = open(outputFilePath + outputFileName + 'Log.txt', 'w')
     
-    
-    # Specify columns representing individual, observation, and alternative id
+    # Generate columns representing individual, observation, and alternative id
     indID = data[ind_id_col].values
     obsID = data[obs_id_col].values
     altID = data[alt_id_col].values
     
-    # Transpose the choice column
+    # Generate the choice column and transpose it
     choice = np.reshape(data[choice_col].values, (data.shape[0], 1))
     
     # CLASS MEMBERSHIP MODEL
@@ -866,14 +866,15 @@ def lccm_fit(data,
     # 2D array of size (nClasses x nRows) where 1=available, 0=not
     if avail_classes is None:
         availIndClasses = np.ones((nClasses, data.shape[0]), dtype=np.int)
+        
+    # AVAILABLE ALTERNATIVES: 
     
     # TO DO - fix to deal with intercept properly
     intercept = np.ones(data.shape[0])
     vars = np.vstack((data[var].values for var in class_membership_spec))
     expVarsClassMem = np.vstack((intercept, vars))
     
-    # CLASS SPECIFIC MODELS
-    
+    # Use pylogit to generate design matrices for the class-specific models
     design_matrices = [pylogit.choice_tools.create_design_matrix(data, spec, 'altID')[0] 
     						for spec in class_specific_specs]
 
@@ -886,21 +887,21 @@ def lccm_fit(data,
     paramClassSpec.append(np.array([-2,0,0,0]))
     paramClassSpec.append(np.array([-15]))
     
-    
+    # Invoke emAlgo()
     emAlgo(outputFilePath = outputFilePath, 
            outputFileName = outputFileName, 
            outputFile = outputFile, 
            nClasses = nClasses, 
            indID = indID, 
            expVarsClassMem = expVarsClassMem, 
-           namesExpVarsClassMem = namesExpVarsClassMem, 
+           namesExpVarsClassMem = class_membership_labels, 
            availIndClasses = availIndClasses,
            obsID = obsID, 
            altID = altID, 
            choice = choice, 
            availAlts = availAlts, 
            expVarsClassSpec = expVarsClassSpec, 
-           namesExpVarsClassSpec = namesExpVarsClassSpec, 
+           namesExpVarsClassSpec = class_specific_labels, 
            indWeights = indWeights,
            paramClassMem = paramClassMem,
            paramClassSpec = paramClassSpec)
