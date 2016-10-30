@@ -873,8 +873,6 @@ def lccm_fit(data,
     # starting values for the parameters of the class membership and class specific models
     paramClassMem = np.zeros(expVarsClassMem.shape[0]*(nClasses-1))
     paramClassSpec = []
-    
-    # SPECIFY STARTING VALUES
     paramClassSpec.append(np.array([-1,0,0]))    
     paramClassSpec.append(np.array([-2,0,0,0]))
     paramClassSpec.append(np.array([-15]))
