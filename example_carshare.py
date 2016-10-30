@@ -19,7 +19,6 @@ df = pd.DataFrame(data, columns=['indID', 'altID', 'obsID', 'choice', 'zipInd',
 # Clean up and scale variables as needed
 df['hhIncome'] = df.hhIncome / 1000
 
-print df.describe()
 
 # Class-membership model: 
 # The first step is to specify the number of latent classes and to identify the column 
@@ -121,44 +120,28 @@ namesExpVarsClassSpec.append(['ASC (CarShare)'])
 
 # DICTIONARY VERSION
 
+# New vars: carshare choice indicator, and interaction of utility components with choice
+
 df['altcarshare'] = (df.altID == 1).astype(int)
 df['v_accessibility'] = df.altID * df.accessibility
 df['v_adopters'] = df.altID * df.adopters
 df['v_google_dummy'] = df.altID * df.googleDummy
 
-spec1 = OrderedDict([
-        ('altcarshare', [1]),
-        ('v_accessibility', [1]),
-        ('v_google_dummy', [1])
-    ])
+# Set up class-specific specifications in a pylogit-style format
 
-spec2 = OrderedDict([
-        ('altcarshare', [1]),
-        ('v_accessibility', [1]),
-        ('v_adopters', [1]),
-        ('v_google_dummy', [1])
-    ])
-
-spec3 = OrderedDict([
-        ('altcarshare', [1])
-    ])
-
-specs = [spec1, spec2, spec3]
-
-# How to get Timothy's code to give us a design matrix?
-# 1. run Timothy's function
-# 2. add an intercept
-# 3. transpose matrix
-
-# matrix = pylogit.choice_tools.create_design_matrix(df, spec1, 'altID')
-# 
-# print type(matrix[0])
-# print matrix[0].shape
-# print np.transpose(matrix[0])[:,2000:2004]
-# 
-
-
-
+class_specific_specs = [
+		OrderedDict([
+			('altcarshare', [1]), 
+			('v_accessibility', [1]), 
+			('v_google_dummy', [1]) ]),
+		OrderedDict([
+			('altcarshare', [1]),
+			('v_accessibility', [1]),
+        	('v_adopters', [1]),
+        	('v_google_dummy', [1]) ]),
+		OrderedDict([
+        	('altcarshare', [1])])
+        ]
 
 
 # Parameter Estimation
@@ -175,7 +158,7 @@ with warnings.catch_warnings():
                   class_membership_spec = class_membership_spec,
                   namesExpVarsClassMem = namesExpVarsClassMem, 
                   availAlts = availAlts, 
-                  class_specific_specs = specs,
+                  class_specific_specs = class_specific_specs,
                   namesExpVarsClassSpec = namesExpVarsClassSpec, 
                   indWeights = indWeights)
 

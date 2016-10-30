@@ -824,6 +824,17 @@ def lccm_fit(data,
              avail_classes = None,
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
+    """
+    Takes pylogit-style dataframes and dict-based specifications, converts them into
+    matrices, and invokes emAlgo()
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    
+    """
 
     # These parameters can be optional:
     # - availIndClasses, availAlts
@@ -863,12 +874,10 @@ def lccm_fit(data,
     
     # CLASS SPECIFIC MODELS
     
-    s = class_specific_specs
-    m1 = pylogit.choice_tools.create_design_matrix(data, s[0], 'altID')[0]
-    m2 = pylogit.choice_tools.create_design_matrix(data, s[1], 'altID')[0]
-    m3 = pylogit.choice_tools.create_design_matrix(data, s[2], 'altID')[0]
+    design_matrices = [pylogit.choice_tools.create_design_matrix(data, spec, 'altID')[0] 
+    						for spec in class_specific_specs]
 
-    expVarsClassSpec = [np.transpose(m1), np.transpose(m2), np.transpose(m3)]
+    expVarsClassSpec = [np.transpose(m) for m in design_matrices]
     
     # starting values for the parameters of the class membership and class specific models
     paramClassMem = np.zeros(expVarsClassMem.shape[0]*(nClasses-1))
