@@ -815,7 +815,7 @@ def lccm_fit(data,
              obs_id_col,
              alt_id_col,
              choice_col,
-             nClasses, 
+             n_classes,
              class_membership_spec, 
              class_membership_labels, 
              class_specific_specs,
@@ -861,6 +861,11 @@ def lccm_fit(data,
     choice = np.reshape(data[choice_col].values, (data.shape[0], 1))
     
     # CLASS MEMBERSHIP MODEL
+    
+    # NUMBER OF CLASSES: We could infer this from the number of choice specifications 
+    # provided, but it's probably better to make it explicit, because that gives us the 
+    # option of taking a single choice specification and using it for all the classes?
+    nClasses = n_classes
     
     # AVAILABLE CLASSES: Which latent classes are available to which decision-maker? 
     # 2D array of size (nClasses x nRows) where 1=available, 0=not

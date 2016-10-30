@@ -16,14 +16,16 @@ data = np.loadtxt(open(inputFilePath + inputFileName, 'rb'), delimiter='\t')
 df = pd.DataFrame(data, columns=['indID', 'altID', 'obsID', 'choice', 'zipInd',
         'hhIncome', 'male', 'adopters', 'stationDummy', 'googleDummy', 'accessibility'])
 
-# Clean up and scale variables as needed
+# Clean up and scale variables as needed, create interactions
 df['hhIncome'] = df.hhIncome / 1000
+
+df['altcarshare'] = (df.altID == 1).astype(int)
+df['v_accessibility'] = df.altID * df.accessibility
+df['v_adopters'] = df.altID * df.adopters
+df['v_google_dummy'] = df.altID * df.googleDummy
 
 
 # Class-membership model: 
-# The first step is to specify the number of latent classes
-
-nClasses = 3
 
 # accounting for weights - choice-based sampling (Moshe & Lerman)
 # Weighted Exogenous Sample Maximum Likelihood (WESML)
@@ -38,21 +40,13 @@ indWeights = np.hstack((indWeightsA,indWeightsNA))
 # the ith explanatory variable entering the utility for the decision-maker corresponding 
 # to the jth row in the data file.
 
+n_classes = 3
+
 class_membership_spec = ['hhIncome', 'male']
 class_membership_labels = ['Class-specific constant','Monthly Income (1000s $)', 'male' ]
 
 
-# UTILITY SPECIFICATIONS FOR EACH LATENT CLASS
-
-# New vars: carshare choice indicator, and interaction of utility components with choice
-
-df['altcarshare'] = (df.altID == 1).astype(int)
-df['v_accessibility'] = df.altID * df.accessibility
-df['v_adopters'] = df.altID * df.adopters
-df['v_google_dummy'] = df.altID * df.googleDummy
-
-
-# Set up class-specific specifications in a pylogit-style format, and corresponding labels
+# Class-specific choice models
 
 class_specific_specs = [
 	OrderedDict([
@@ -75,7 +69,7 @@ class_specific_labels = [
 ]
 
 
-# Invoke the parameter estimation
+# Fit the model
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -85,7 +79,7 @@ with warnings.catch_warnings():
                   obs_id_col = 'obsID',
                   alt_id_col = 'altID',
                   choice_col = 'choice', 
-                  nClasses = nClasses, 
+                  n_classes = n_classes,
                   class_membership_spec = class_membership_spec,
                   class_membership_labels = class_membership_labels,
                   class_specific_specs = class_specific_specs,
