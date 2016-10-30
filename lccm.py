@@ -818,11 +818,11 @@ def lccm_fit(data,
              nClasses, 
              class_membership_spec, 
              class_membership_labels, 
-             availAlts, 
              class_specific_specs,
              class_specific_labels, 
              indWeights,
              avail_classes = None,
+             avail_alts = None, 
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
     """
@@ -862,19 +862,24 @@ def lccm_fit(data,
     
     # CLASS MEMBERSHIP MODEL
     
-    # Which latent classes are available to which decision-maker? 
+    # AVAILABLE CLASSES: Which latent classes are available to which decision-maker? 
     # 2D array of size (nClasses x nRows) where 1=available, 0=not
     if avail_classes is None:
         availIndClasses = np.ones((nClasses, data.shape[0]), dtype=np.int)
-        
-    # AVAILABLE ALTERNATIVES: 
     
+    # CLASS MEMBERSHIP MODEL: Generate design matrix
     # TO DO - fix to deal with intercept properly
     intercept = np.ones(data.shape[0])
     vars = np.vstack((data[var].values for var in class_membership_spec))
     expVarsClassMem = np.vstack((intercept, vars))
     
-    # Use pylogit to generate design matrices for the class-specific models
+    # AVAILABLE ALTERNATIVES: Which choice alternatives are available to each latent
+    # class of decision-makers? List of size nClasses, where each element is a list of
+    # identifiers of the alternatives available to members of that class.
+    if avail_alts is None:
+    	availAlts = [np.unique(altID) for s in class_specific_specs]    
+    
+    # CLASS-SPECIFIC MODELS: Use pylogit to generate design matrices
     design_matrices = [pylogit.choice_tools.create_design_matrix(data, spec, 'altID')[0] 
     						for spec in class_specific_specs]
 

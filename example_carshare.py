@@ -42,16 +42,6 @@ class_membership_spec = ['hhIncome', 'male']
 class_membership_labels = ['Class-specific constant','Monthly Income (1000s $)', 'male' ]
 
 
-
-# Choice set constraints are imposed through the variable availAlts, a list of 
-# size nClasses, where the sth element is an array containing identifiers for the 
-# alternatives that are available to decision-makers belonging to the sth class.
-    
-availAlts = [np.array([0, 1]), 
-                np.array([0, 1]), np.array([0, 1])]    
-
-
-
 # UTILITY SPECIFICATIONS FOR EACH LATENT CLASS
 
 # New vars: carshare choice indicator, and interaction of utility components with choice
@@ -98,7 +88,6 @@ with warnings.catch_warnings():
                   nClasses = nClasses, 
                   class_membership_spec = class_membership_spec,
                   class_membership_labels = class_membership_labels,
-                  availAlts = availAlts, 
                   class_specific_specs = class_specific_specs,
                   class_specific_labels = class_specific_labels, 
                   indWeights = indWeights)
