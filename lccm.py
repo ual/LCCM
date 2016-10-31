@@ -826,30 +826,62 @@ def lccm_fit(data,
              outputFilePath = 'output/', 
              outputFileName = 'ModelResults'):
     """
-    Takes pylogit-style dataframes and dict-based specifications, converts them into
-    matrices, and invokes emAlgo()
+    Takes a PyLogit-style dataframe and dict-based specifications, converts them into
+    matrices, and invokes emAlgo().
     
     Parameters
     ----------
-    
+    data : pandas.DataFrame
+    	Labeled data in long format (i.e., each alternative in a choice scenario is in a 
+    	separate row).
+    ind_id_col : str
+    	Name of column identifying the decision maker for each row of data.
+    obs_id_col : str
+    	Name of column identifying the observation (choice scenario).
+    alt_id_col : str
+    	Name of column identifying the alternative represented.
+    choice_col : str
+    	Name of column identifying whether the alternative represented by a row was 
+    	chosen during the corresponding observation. 
+    n_classes : int
+    	Number of latent classes to be estimated by the model. 
+    class_membership_spec : list of strings
+    	List of column names to be used as explanatory variables for the class membership 
+    	model. If the first element is 'intercept', an intercept will be generated (and 
+    	any column of data with that name will be lost). 
+    class_membership_labels : list of strings, of same length as class_membership_spec
+    	Labels for the explanatory variables in the class membership model.
+    class_specific_spec : list of OrderedDicts, of length n_classes
+    	Each OrderedDict represents the specification for one class-specific choice model.
+    	Specifications should have keys representing the column names to be used as 
+    	explanatory variables, and values that are lists of the applicable alternative
+    	id's. Specs will be passed to pylogit.choice_tools.create_design_matrix().
+    class_specific_labels : list of list of strings
+    	Labels for the explanatory variables in the class-specific choice models. THIS 
+    	FUNCTION WILL NEED TO BE ADAPTED TO ACCEPT PYLOGIT-STYLE ORDEREDDICT LABELS.
+    indWeights : list, as specified by emAlgo()
+    	WE SHOULD PROBABLY CHANGE THIS SO THAT USERS SPECIFY WEIGHTS IN THE DATAFRAME,
+    	AND THIS PARAMETER IS AN OPTIONAL COLUMN NAME.
+    avail_classes : 2D array of size (n_classes x n_rows), optional
+    	Which classes are available to which decision-maker? The (i,j)th element equals 1
+    	if the ith latent class is available to the decision-maker corresponding to the 
+    	jth row of the dataset, and 0 otherwise. If not specified, all classes are
+    	available to all decision-makers. (SHOULD THIS GO IN THE DATAFRAME TOO?)
+    avail_alts : list of length n_classes, optional
+    	Which choice alternatives are available to members of each latent class? The sth
+    	element is an array containing identifiers for the alternatives that are available
+    	to decision-makers belonging to the sth latent class. If not specified, all
+    	alternatives are available to members of all latent classes.
+    outputFilePath : str, optional
+    	Relative file path for output. If not specified, defaults to 'output/'
+    outputFileName : str, optional
+    	Basename for output files. If not specified, defaults to 'ModelResults'
+    	
     Returns
     -------
+    None
     
     """
-
-    # These parameters can be optional:
-    # - availIndClasses, availAlts
-    # - outputFilePath, outputFileName, outputFile
-    
-    # These params are special for LCCM, not in other models:
-    # - nClasses, expVarsClassMem, namesExpVarsClassMem
-    
-    # These should be similar or same to Tim's:
-    # - indID, obsID, altID, choice, (availAlts??)
-    
-    # These need translation between Tim spec and Feras spec:
-    # - expVarsClassSpec, namesExpVarsClassSpec, indWeights
-    
     outputFile = open(outputFilePath + outputFileName + 'Log.txt', 'w')
     
     # Generate columns representing individual, observation, and alternative id
@@ -873,10 +905,10 @@ def lccm_fit(data,
         availIndClasses = np.ones((nClasses, data.shape[0]), dtype=np.int)
     
     # CLASS MEMBERSHIP MODEL: Generate design matrix, including intercept if needed. 
-    # We're not using the function from pylogit for two reasons: (1) we don't have a 
-    # choice column to provide, and (2) the convention is for all parameters to be 
+    # We're not using the function from PyLogit for two reasons: (1) we don't have a 
+    # choice column to provide, and (2) the convention in LCCM is for all parameters to be 
     # included for each class, so we won't have any of the special cases that the ordered
-    # dictionaries enable. (May want to revisit this in future.)
+    # dictionaries help with. (May want to revisit this in future.)
     
     if (class_membership_spec[0] == 'intercept'):
     	data['intercept'] = np.ones(data.shape[0])
@@ -890,12 +922,16 @@ def lccm_fit(data,
     if avail_alts is None:
     	availAlts = [np.unique(altID) for s in class_specific_specs]    
     
-    # CLASS-SPECIFIC MODELS: Use pylogit to generate design matrices
+    # CLASS-SPECIFIC MODELS: Use PyLogit to generate design matrices
     
-    design_matrices = [pylogit.choice_tools.create_design_matrix(data, spec, 'altID')[0] 
+    design_matrices = [pylogit.choice_tools.create_design_matrix(data, spec, alt_id_col)[0] 
     						for spec in class_specific_specs]
 
     expVarsClassSpec = [np.transpose(m) for m in design_matrices]
+    
+    # NOTE: class-specific choice specifications with explanatory variables that vary
+    # by alternative should work automatically thanks to PyLogit, but the output labels 
+    # WILL NOT work until we update the LCCM code to handle that. 
     
     # starting values for the parameters of the class membership and class specific models
     paramClassMem = np.zeros(expVarsClassMem.shape[0]*(nClasses-1))
