@@ -1043,7 +1043,10 @@ def lccm_fit(data,
     for i in range(0, len(class_specific_labels)):
         name_iterator=[]
         for key, value in class_specific_labels[i].iteritems() :
-            name_iterator.append(value)
+            if type(value) is list:
+                name_iterator += value
+            else:
+                name_iterator.append(value)
         namesExpVarsClassSpec.append(name_iterator)
         
     
