@@ -43,14 +43,14 @@ choice_col = 'CHOICE'
 
 spec =  OrderedDict([
             ('intercept', [1, 2, 3, 4, 5, 6]),
-            ('travel_time', [[1, 2, 3, 4, 5, 6, 7]]),
+            ('travel_time', [[1, 2], [3, 4, 5], [6, 7]]),
             ('travel_cost', [[1, 2, 3, 4, 5, 6, 7]]),
             ('emissions', [[1, 2, 3, 4, 5, 6, 7]])
         ])
 
 labels = OrderedDict([
-            ('intercept', ['asc_drive1', 'asc_drive1', 'asc_bus1', 'asc_bus2', 'asc_train', 'asc_bike']),
-            ('travel_time', ['travel time']), 
+            ('intercept', ['asc_drive1', 'asc_drive2', 'asc_bus1', 'asc_bus2', 'asc_train', 'asc_bike']),
+            ('travel_time', ['travel time car', 'travel time transit', 'travel time active']), 
             ('travel_cost', ['travel cost']),
             ('emissions', ['emissions'])
         ])
